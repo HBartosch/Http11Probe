@@ -1,7 +1,6 @@
 using System.Text;
 using EffinitiveFramework.Core;
 using EffinitiveFramework.Core.Http;
-using EffinitiveServer.Endpoints;
 
 var port = args.Length > 0 && int.TryParse(args[0], out var p) ? p : 8080;
 

@@ -8,4 +8,5 @@ RUN dotnet publish src/Servers/EffinitiveServer/EffinitiveServer.csproj -c Relea
 FROM mcr.microsoft.com/dotnet/runtime:10.0
 WORKDIR /app
 COPY --from=build /app .
+USER $APP_UID
 ENTRYPOINT ["dotnet", "EffinitiveServer.dll", "8080"]
