@@ -19,6 +19,7 @@ RUN dotnet publish src/Servers/EffinitiveServer/EffinitiveServer.csproj -c Relea
 FROM mcr.microsoft.com/dotnet/runtime:10.0
 WORKDIR /app
 COPY --from=build /app .
+USER $APP_UID
 ENTRYPOINT ["dotnet", "EffinitiveServer.dll", "8080"]
 ```
 
@@ -40,97 +41,102 @@ var app = EffinitiveApp
 Console.WriteLine($"Effinitive listening on http://localhost:{port}");
 await app.RunAsync();
 
-// ── GET / ──────────────────────────────────────────────────────
-
-sealed class GetRoot : NoRequestEndpointBase<string>
+namespace EffinitiveServer.Endpoints
 {
-    protected override string Method => "GET";
-    protected override string Route => "/";
-    protected override string ContentType => "text/plain";
+    // ── GET / ──────────────────────────────────────────────────────
 
-    public override ValueTask<string> HandleAsync(CancellationToken ct = default)
-        => ValueTask.FromResult("OK");
-}
-
-// ── POST / ─────────────────────────────────────────────────────
-
-sealed class PostRoot : NoRequestEndpointBase<string>
-{
-    protected override string Method => "POST";
-    protected override string Route => "/";
-    protected override string ContentType => "text/plain";
-
-    public override ValueTask<string> HandleAsync(CancellationToken ct = default)
+    sealed class GetRoot : NoRequestEndpointBase<string>
     {
-        var body = HttpContext?.Body;
-        return ValueTask.FromResult(body is { Length: > 0 } ? Encoding.UTF8.GetString(body) : "");
-    }
-}
+        protected override string Method => "GET";
+        protected override string Route => "/";
+        protected override string ContentType => Helpers.TextPlain;
 
-// ── GET/POST /echo ────────────────────────────────────────────
-
-sealed class EchoGet : NoRequestEndpointBase<string>
-{
-    protected override string Method => "GET";
-    protected override string Route => "/echo";
-    protected override string ContentType => "text/plain";
-
-    public override ValueTask<string> HandleAsync(CancellationToken ct = default)
-        => ValueTask.FromResult(Helpers.EchoHeaders(HttpContext));
-}
-
-sealed class EchoPost : NoRequestEndpointBase<string>
-{
-    protected override string Method => "POST";
-    protected override string Route => "/echo";
-    protected override string ContentType => "text/plain";
-
-    public override ValueTask<string> HandleAsync(CancellationToken ct = default)
-        => ValueTask.FromResult(Helpers.EchoHeaders(HttpContext));
-}
-
-// ── GET/POST /cookie ──────────────────────────────────────────
-
-sealed class CookieGet : NoRequestEndpointBase<string>
-{
-    protected override string Method => "GET";
-    protected override string Route => "/cookie";
-    protected override string ContentType => "text/plain";
-
-    public override ValueTask<string> HandleAsync(CancellationToken ct = default)
-        => ValueTask.FromResult(Helpers.ParseCookies(HttpContext));
-}
-
-sealed class CookiePost : NoRequestEndpointBase<string>
-{
-    protected override string Method => "POST";
-    protected override string Route => "/cookie";
-    protected override string ContentType => "text/plain";
-
-    public override ValueTask<string> HandleAsync(CancellationToken ct = default)
-        => ValueTask.FromResult(Helpers.ParseCookies(HttpContext));
-}
-
-// ── Shared helpers ────────────────────────────────────────────
-
-static class Helpers
-{
-    public static string EchoHeaders(HttpRequest? ctx)
-    {
-        if (ctx?.Headers is null) return "";
-        var sb = new StringBuilder();
-        foreach (var h in ctx.Headers)
-            sb.Append(h.Key).Append(": ").Append(h.Value).Append("\r\n");
-        return sb.ToString();
+        public override ValueTask<string> HandleAsync(CancellationToken ct = default)
+            => ValueTask.FromResult("OK");
     }
 
-    public static string ParseCookies(HttpRequest? ctx)
+    // ── POST / ─────────────────────────────────────────────────────
+
+    sealed class PostRoot : NoRequestEndpointBase<string>
     {
-        if (ctx is null) return "";
-        var sb = new StringBuilder();
-        foreach (var c in ctx.Cookies)
-            sb.Append(c.Key).Append('=').Append(c.Value).Append("\r\n");
-        return sb.ToString();
+        protected override string Method => "POST";
+        protected override string Route => "/";
+        protected override string ContentType => Helpers.TextPlain;
+
+        public override ValueTask<string> HandleAsync(CancellationToken ct = default)
+        {
+            var body = HttpContext?.Body;
+            return ValueTask.FromResult(body is { Length: > 0 } ? Encoding.UTF8.GetString(body) : "");
+        }
+    }
+
+    // ── GET/POST /echo ────────────────────────────────────────────
+
+    sealed class EchoGet : NoRequestEndpointBase<string>
+    {
+        protected override string Method => "GET";
+        protected override string Route => "/echo";
+        protected override string ContentType => Helpers.TextPlain;
+
+        public override ValueTask<string> HandleAsync(CancellationToken ct = default)
+            => ValueTask.FromResult(Helpers.EchoHeaders(HttpContext));
+    }
+
+    sealed class EchoPost : NoRequestEndpointBase<string>
+    {
+        protected override string Method => "POST";
+        protected override string Route => "/echo";
+        protected override string ContentType => Helpers.TextPlain;
+
+        public override ValueTask<string> HandleAsync(CancellationToken ct = default)
+            => ValueTask.FromResult(Helpers.EchoHeaders(HttpContext));
+    }
+
+    // ── GET/POST /cookie ──────────────────────────────────────────
+
+    sealed class CookieGet : NoRequestEndpointBase<string>
+    {
+        protected override string Method => "GET";
+        protected override string Route => "/cookie";
+        protected override string ContentType => Helpers.TextPlain;
+
+        public override ValueTask<string> HandleAsync(CancellationToken ct = default)
+            => ValueTask.FromResult(Helpers.ParseCookies(HttpContext));
+    }
+
+    sealed class CookiePost : NoRequestEndpointBase<string>
+    {
+        protected override string Method => "POST";
+        protected override string Route => "/cookie";
+        protected override string ContentType => Helpers.TextPlain;
+
+        public override ValueTask<string> HandleAsync(CancellationToken ct = default)
+            => ValueTask.FromResult(Helpers.ParseCookies(HttpContext));
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────
+
+    static class Helpers
+    {
+        public const string TextPlain = "text/plain";
+
+        public static string EchoHeaders(HttpRequest? ctx)
+        {
+            if (ctx?.Headers is null) return "";
+            var sb = new StringBuilder();
+            foreach (var h in ctx.Headers)
+                sb.Append(h.Key).Append(": ").Append(h.Value).Append("\r\n");
+            return sb.ToString();
+        }
+
+        public static string ParseCookies(HttpRequest? ctx)
+        {
+            if (ctx is null) return "";
+            var sb = new StringBuilder();
+            foreach (var c in ctx.Cookies)
+                sb.Append(c.Key).Append('=').Append(c.Value).Append("\r\n");
+            return sb.ToString();
+        }
     }
 }
 ```
