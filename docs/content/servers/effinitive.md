@@ -167,6 +167,6 @@ static class Helpers
     document.getElementById('server-summary').innerHTML = '<p><em>No probe data available yet. Run the Probe workflow on <code>main</code> to generate results.</em></p>';
     return;
   }
-  ProbeRender.renderServerPage('Nginx');
+  ProbeRender.renderServerPage('Effinitive');
 })();
 </script>
