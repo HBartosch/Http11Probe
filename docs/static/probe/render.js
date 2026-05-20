@@ -526,6 +526,7 @@ window.ProbeRender = (function () {
     'Pingora': '/servers/pingora/',
     'Puma': '/servers/puma/',
     'Quarkus': '/servers/quarkus/',
+    'Effinitive': '/servers/effinitive/',
     'ServiceStack': '/servers/servicestack/',
     'SimpleW': '/servers/simplew/',
     'Sisk': '/servers/sisk/',
